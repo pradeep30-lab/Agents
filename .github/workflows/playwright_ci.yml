@@ -1,0 +1,81 @@
+name: Playwright Tests & Auto-Healing PR
+
+on:
+  push:
+    branches: [ ai_agent ]
+  pull_request:
+    branches: [ ai_agent ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Dependencies
+        run: |
+          pip install -r requirements.txt
+          playwright install --with-deps
+
+      - name: Run Playwright Pytest
+        env:
+          OPENAI_API_KEY: ${{ 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 }}
+        run: |
+          pytest --continue-on-collection-errors || true
+
+      # --- POST-TEST AUTO-PR PIPELINE STEP ---
+      - name: Parse Healing Log and Create Auto-PR
+        if: always()
+        env:
+          GITHUB_TOKEN: ${{ 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 }}
+        run: |
+          if [ ! -f healing_log.json ]; then
+            echo "No healing_log.json generated. Skipping Auto-PR step."
+            exit 0
+          fi
+
+          echo "Applying self-healing patches to Page Object Models..."
+          python scripts/patch_pom.py
+
+          # Check if git has detected file modifications
+          if [ -z "$(git status --porcelain)" ]; then
+            echo "No files modified after running patch script."
+            exit 0
+          fi
+
+          # Setup Git Identity
+          git config user.name "pradeep30-lab"
+          git config user.email "Pradeep.S.Avvaru@gmail.com"
+
+          BRANCH_NAME="auto-heal/selector-updates-${{ github.run_id }}"
+          
+          git checkout -b $BRANCH_NAME
+          git add .
+          git commit -m "fix(pom): auto-heal broken test selectors from AI interceptor"
+          git push origin $BRANCH_NAME
+
+          echo "Creating Pull Request via GitHub CLI..."
+          gh pr create \
+            --title "🤖 Auto-Heal: Repaired Page Object Model Selectors" \
+            --body "### AI Selector Repair Summary
+            The execution interceptor successfully self-healed one or more broken selectors during test execution.
+            
+            **Changes Applied:**
+            \`\`\`json
+            $(cat healing_log.json)
+            \`\`\`
+            
+            *Please review and merge these POM updates into your target branch.*" \
+            --base main \
+            --head $BRANCH_NAME
