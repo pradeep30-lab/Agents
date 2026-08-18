@@ -2,9 +2,11 @@ name: Playwright Tests & Auto-Healing PR
 
 on:
   push:
-    branches: [ ai_agent ]
+    branches:
+      - '**' # Triggers on push to ANY branch
   pull_request:
-    branches: [ ai_agent ]
+    branches:
+      - '**' # Triggers on push to ANY branch
 
 jobs:
   test:
