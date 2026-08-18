@@ -32,7 +32,7 @@ jobs:
 
       - name: Run Playwright Pytest
         env:
-          OPENAI_API_KEY: ${{ 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 }}
+          OPENAI_API_KEY: "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"
         run: |
           pytest --continue-on-collection-errors || true
 
@@ -40,7 +40,7 @@ jobs:
       - name: Parse Healing Log and Create Auto-PR
         if: always()
         env:
-          GITHUB_TOKEN: ${{ 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 }}
+          GITHUB_TOKEN: "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"
         run: |
           if [ ! -f healing_log.json ]; then
             echo "No healing_log.json generated. Skipping Auto-PR step."
