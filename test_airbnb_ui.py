@@ -12,7 +12,7 @@ import pytest
 
 # Initialize instructor client for constrained JSON outputs
 client = instructor.from_openai(
-    openai.AsyncOpenAI(api_key=os.environ.get("OPENAI_API_KEY", "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"))
+    openai.AsyncOpenAI(api_key=os.environ.get("OPENAI_API_KEY", ""))
 )
 
 
